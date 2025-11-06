@@ -10,5 +10,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.example-backend-app.rule=Host(`droga.cloud`)"
       - "traefik.http.routers.example-backend-app.entrypoints=websecure"
+      - "traefik.http.routers.example-backend-app.service=example-backend-service"
       - "traefik.http.routers.example-backend-app.tls.certresolver=my-resolver"
-      - "traefik.http.services.example-backend-app.loadbalancer.server.url=http://localhost:8080"
+      - "traefik.http.services.example-backend-service.loadbalancer.server.url=http://localhost:8080"
