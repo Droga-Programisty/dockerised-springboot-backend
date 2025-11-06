@@ -14,6 +14,6 @@ public class HelloController {
 
     @GetMapping()
     public String hello() {
-        return "Hello, " + name + ". We are running on: " + applicationName;
+        return "Hello, " + name + ". We are running on. " + applicationName;
     }
 }
