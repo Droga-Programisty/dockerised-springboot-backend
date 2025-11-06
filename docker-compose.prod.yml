@@ -1,0 +1,20 @@
+services:
+  example-backend-app:
+    image: docker.io/lukaszdutka/drogaprogramisty:example-backend-app
+    container_name: myapp-backend
+    restart: unless-stopped
+    networks:
+      - traefik
+      - backend
+    environment:
+      ENVIRONMENT_VARIABLE_HELLO_NAME: ${ENVIRONMENT_VARIABLE_HELLO_NAME}
+      SPRING_PROFILES_ACTIVE: prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.example-backend-app.rule=Host(`droga.cloud`)"
+      - "traefik.http.routers.example-backend-app.entrypoints=websecure"
+      - "traefik.http.routers.example-backend-app.tls.certresolver=my-resolver"
+      - "traefik.http.services.example-backend-app.loadbalancer.server.url=http://localhost:8080"

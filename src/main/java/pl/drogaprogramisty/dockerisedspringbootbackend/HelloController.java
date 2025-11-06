@@ -9,9 +9,11 @@ public class HelloController {
 
     @Value("${name}")
     private String name;
+    @Value("${spring.application.name}")
+    private String applicationName;
 
     @GetMapping()
     public String hello() {
-        return "Hello, " + name;
+        return "Hello, " + name + ". We are running on: " + applicationName;
     }
 }
