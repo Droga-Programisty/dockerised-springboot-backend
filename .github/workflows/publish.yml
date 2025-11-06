@@ -50,6 +50,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/drogaprogramisty:example-backend-app
   deploy:
     needs: build-and-push
+    if: needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped'
     runs-on: ubuntu-latest
     environment:
       name: production
