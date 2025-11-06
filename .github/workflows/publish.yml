@@ -4,18 +4,31 @@ on:
   push:
     branches: [ main, master ]
     paths:
-      - 'src/**'
+      - 'src/main/**'
       - 'Dockerfile'
       - 'pom.xml'
       - 'docker-compose.prod.yml'
       - '.mvn/**'
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.filter.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            relevant:
+              - 'src/main/**'
+              - 'Dockerfile'
+              - 'pom.xml'
+              - '.mvn/**'
+
   build-and-push:
-    if: contains(github.event.head_commit.modified, 'src/') ||
-      contains(github.event.head_commit.modified, 'Dockerfile') ||
-      contains(github.event.head_commit.modified, 'pom.xml') ||
-      contains(github.event.head_commit.modified, '.mvn/')
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
