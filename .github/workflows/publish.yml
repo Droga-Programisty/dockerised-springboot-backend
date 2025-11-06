@@ -1,13 +1,21 @@
-name: Build and Publish Docker Image
+name: Build, Publish and Deploy Docker Image
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
+    paths:
+      - 'src/**'
+      - 'Dockerfile'
+      - 'pom.xml'
+      - 'docker-compose.prod.yml'
+      - '.mvn/**'
 
 jobs:
   build-and-push:
+    if: contains(github.event.head_commit.modified, 'src/') ||
+      contains(github.event.head_commit.modified, 'Dockerfile') ||
+      contains(github.event.head_commit.modified, 'pom.xml') ||
+      contains(github.event.head_commit.modified, '.mvn/')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -26,3 +34,36 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/drogaprogramisty:example-backend-app
+  deploy:
+    needs: [ build-and-push ]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose to VPS
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "./docker-compose.prod.yml"
+          target: "/home/${{ secrets.USERNAME }}/example-backend-app"
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "${{ secrets.DOCKER_TOKEN }}" | docker login docker.io -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            cd /home/${{ secrets.USERNAME }}/example-backend-app
+            docker pull docker.io/${{ secrets.DOCKER_USERNAME }}/drogaprogramisty:example-backend-app
+            
+            export ENVIRONMENT_VARIABLE_HELLO_NAME="${{ secrets.DOCKER_USERNAME }}"
+            
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
